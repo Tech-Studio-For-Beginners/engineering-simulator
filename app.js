@@ -1,6 +1,7 @@
-import { incident001 } from './src/scenarios/incident-001.js?v=20260911-14';
-import { Simulator } from './src/engine.js?v=20260911-14';
+import { incident001 } from './src/scenarios/incident-001.js?v=20260911-15';
+import { Simulator } from './src/engine.js?v=20260911-15';
 import { scoreRun } from './src/scoring.js?v=20260911-14';
+import { runDiagnosticCommand } from './src/terminal.js?v=20260911-15';
 
 const scenario = incident001;
 const state = new Simulator(scenario);
@@ -14,8 +15,13 @@ function map(){
   const selected=state.hypothesis;
   const nodeState=id => selected===id ? 'selected' : checked.has(id) ? (id==='firewall' ? 'fault' : 'healthy') : 'unknown';
   const nodes=scenario.visualMap.nodes;
-  const nodeHtml=id=>{const n=nodes.find(x=>x[0]===id);const status=nodeState(id);const label=status==='unknown'?'Not checked':status==='fault'?'Problem found':status==='selected'?'Your hypothesis': 'Checked';return `<div class="map-node ${status}" title="${esc(n[3])}"><div class="map-icon">${n[1]}</div><div><strong>${esc(n[2])}</strong><span>${label}</span></div></div>`;};
+  const nodeHtml=id=>{const n=nodes.find(x=>x[0]===id);const status=nodeState(id);const label=status==='unknown'?'Not checked':status==='fault'?'Problem found':status==='selected'?'Your hypothesis':'Checked';return `<div class="map-node ${status}" title="${esc(n[3])}"><div class="map-icon">${n[1]}</div><div><strong>${esc(n[2])}</strong><span>${label}</span></div></div>`;};
   return `<div class="engineering-map"><div class="map-head"><div><div class="eyebrow">System view</div><strong>${esc(scenario.visualMap.title)}</strong><p>${esc(scenario.visualMap.subtitle)}</p></div><div class="map-legend"><span><i class="dot unknown"></i>Unknown</span><span><i class="dot healthy"></i>Checked</span><span><i class="dot fault"></i>Issue</span></div></div><div class="map-flow">${nodeHtml('user')}<div class="map-arrow">↓</div>${nodeHtml('dns')}<div class="map-arrow">↓</div>${nodeHtml('firewall')}<div class="map-arrow">↓</div>${nodeHtml('web')}<div class="map-arrow">↓</div>${nodeHtml('db')}</div></div>`;
+}
+function terminal(){
+  const history=state.terminal.history;
+  const lines=history.length?history.map(item=>`<div class="terminal-entry"><div class="terminal-command"><span>engineer@prod:~$</span> ${esc(item.input)}</div><pre class="terminal-output ${item.ok?'':'terminal-error'}">${esc(item.output)}</pre></div>`).join(''):'<div class="terminal-empty">No commands yet. Start with a diagnostic question, not a guess.</div>';
+  return `<div class="diagnostic-console"><div class="console-head"><div><div class="eyebrow">Diagnostic Console</div><strong>${esc(scenario.terminal.title)}</strong><p>${esc(scenario.terminal.prompt)}</p></div><div class="console-badge">SIMULATED</div></div><div class="terminal-window"><div class="terminal-history">${lines}</div><form class="terminal-form" data-terminal-form><span>engineer@prod:~$</span><input id="terminal-input" autocomplete="off" spellcheck="false" placeholder="Type a command…" aria-label="Diagnostic terminal command"><button class="terminal-run" type="submit">Run</button></form></div><div class="terminal-coach">💡 Try to obtain evidence. For example, you might investigate DNS with <code>nslookup portal.company.com</code>.</div>${state.checks.length?`<button class="secondary console-review" data-diagnose="1">Review evidence (${state.checks.length} check${state.checks.length>1?'s':''}) →</button>`:''}</div>`;
 }
 function maya(){
   let m='I’m Maya. I won’t give you the answer first. I’ll help you reason your way to it.';
@@ -51,8 +57,8 @@ function feedback(){
 
 function render(){
   if(state.stage==='intro')return shell(`<div class="eyebrow">${esc(scenario.subject)} · ${esc(scenario.difficulty)}</div><h1 class="title">${esc(scenario.title)}</h1><p class="sub">${esc(scenario.intro)}</p><div class="meta">${scenario.skills.map(x=>`<span class="tag">${esc(x)}</span>`).join('')}<span class="tag">${esc(scenario.time)}</span></div><div class="row"><button class="primary" data-start="1">Start investigation</button><button class="secondary" data-seminar="1">Seminar mode</button></div>`);
-  if(state.stage==='investigate')return shell(`<div class="eyebrow">Step 1 · Investigate${state.seminar?' · Seminar mode':''}</div><h2>Where do you start?</h2><p class="sub">Use the map to understand the request path, then choose what to investigate first.</p><div class="actions">${scenario.investigation.map(x=>`<button class="choice" data-check="${esc(x[0])}"><strong>${esc(x[1])}</strong><span>${esc(x[2])}</span></button>`).join('')}</div>`,true);
-  if(state.stage==='evidence')return shell(`<div class="eyebrow">Step 2 · Gather evidence</div><h2>What did you find?</h2><p class="sub">The map updates as you investigate. Use the evidence to eliminate possible causes.</p>${state.checks.map(id=>`<div class="evidence"><h3>${esc(scenario.evidence[id][0])}</h3><pre>${esc(scenario.evidence[id][1])}</pre></div>`).join('')}<div class="actions">${scenario.investigation.filter(x=>!state.checks.includes(x[0])).map(x=>`<button class="choice" data-check="${esc(x[0])}"><strong>${esc(x[1])}</strong><span>${esc(x[2])}</span></button>`).join('')}<button class="primary" data-diagnose="1">I’m ready to form a hypothesis</button>${back('Back to investigation','investigate')}</div>`,true);
+  if(state.stage==='investigate')return shell(`<div class="eyebrow">Step 1 · Investigate${state.seminar?' · Seminar mode':''}</div><h2>Investigate before you decide.</h2><p class="sub">Use the map to understand the request path. You can inspect a component directly or use the diagnostic console to gather evidence.</p>${terminal()}<div class="investigation-divider"><span>Or inspect a component directly</span></div><div class="actions">${scenario.investigation.map(x=>`<button class="choice" data-check="${esc(x[0])}"><strong>${esc(x[1])}</strong><span>${esc(x[2])}</span></button>`).join('')}</div>`,true);
+  if(state.stage==='evidence')return shell(`<div class="eyebrow">Step 2 · Gather evidence</div><h2>What did you find?</h2><p class="sub">The map updates as you investigate. Use the evidence to eliminate possible causes.</p>${state.checks.map(id=>`<div class="evidence"><h3>${esc(scenario.evidence[id][0])}</h3><pre>${esc(scenario.evidence[id][1])}</pre></div>`).join('')}${state.terminal.history.length?`<div class="terminal-notes"><strong>Diagnostic console activity</strong><span>${state.terminal.commandsUsed.length} recognised command${state.terminal.commandsUsed.length===1?'':'s'} used. Your terminal evidence remains part of this investigation.</span></div>`:''}<div class="actions">${scenario.investigation.filter(x=>!state.checks.includes(x[0])).map(x=>`<button class="choice" data-check="${esc(x[0])}"><strong>${esc(x[1])}</strong><span>${esc(x[2])}</span></button>`).join('')}<button class="primary" data-diagnose="1">I’m ready to form a hypothesis</button>${back('Back to investigation','investigate')}</div>`,true);
   if(state.stage==='diagnose')return shell(`<div class="eyebrow">Step 3 · Diagnose</div><h2>What is the most likely cause?</h2><p class="sub">Use the map and evidence together. Choose the explanation that best fits what you found.</p><div class="actions">${scenario.hypotheses.map(x=>`<button class="choice" data-hypothesis="${esc(x[0])}"><strong>${esc(x[1])}</strong></button>`).join('')}${back('Back to evidence','evidence')}</div>`,true);
   if(state.stage==='action')return shell(`<div class="eyebrow">Step 4 · Restore</div><h2>What would you do?</h2><p class="sub">Select the action that should restore service.</p><div class="actions">${scenario.actions.map(x=>`<button class="choice" data-fix="${esc(x[0])}"><strong>${esc(x[1])}</strong></button>`).join('')}${back('Back to diagnosis','diagnose')}</div>`);
   if(state.stage==='reasoning')return shell(`<div class="eyebrow">Step 5 · Explain your reasoning</div><h2>Explain it in your own language.</h2><p class="sub">Tell Maya what you found, why you think it caused the problem, and why your chosen action will fix it.</p><div style="margin-top:18px"><div style="font-size:13px;font-weight:750;margin-bottom:8px">Choose your language</div><div class="row"><button class="${state.language==='en-IN'?'primary':'secondary'}" data-language="en-IN">🇬🇧 English</button><button class="${state.language==='ta-IN'?'primary':'secondary'}" data-language="ta-IN">தமிழ்</button></div><p style="font-size:12px;color:#6b7280;margin:10px 0 0">Your language does not affect your engineering score.</p></div><textarea id="reasoning" placeholder="${state.language==='ta-IN'?'உங்கள் முடிவை தமிழில் விளக்குங்கள்...':'Example: 09:10 firewall rule was disabled, so HTTPS traffic on port 443 was blocked...'}">${esc(state.reasoning)}</textarea><div class="row" style="margin-top:12px"><button class="primary" data-submit="1">Submit reasoning</button><button class="secondary" data-voice="1">🎙 Speak your answer</button><button class="secondary" data-hint="1">Ask Maya for a hint</button></div><p id="voice-status" style="font-size:12px;color:#6b7280;margin:10px 0 0;min-height:18px"></p>${state.hints?`<p class="hint">Hint: ${esc(scenario.hints[state.hints-1])}</p>`:''}${back('Back to action','action')}`);
@@ -111,6 +117,17 @@ function listen(){
   };
   startRecognition(recognitionLang,true);
 }
+
+root.addEventListener('submit',e=>{
+  if(!e.target.matches('[data-terminal-form]'))return;
+  e.preventDefault();
+  const input=e.target.querySelector('#terminal-input');
+  const raw=input?.value||'';
+  if(!raw.trim())return;
+  runDiagnosticCommand(scenario,state,raw);
+  render();
+  requestAnimationFrame(()=>document.querySelector('#terminal-input')?.focus());
+});
 
 root.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
