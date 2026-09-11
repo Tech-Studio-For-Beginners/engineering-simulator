@@ -39,7 +39,7 @@ export class Simulator {
 
   chooseAction(id) {
     this.action = id;
-    this.stage = 'explain';
+    this.stage = 'reasoning';
   }
 
   askHint() {
