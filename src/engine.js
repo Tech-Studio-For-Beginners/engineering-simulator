@@ -1,4 +1,4 @@
-import { incident001 } from './scenarios/incident-001.js?v=20260911-13';
+import { incident001 } from './scenarios/incident-001.js?v=20260911-15';
 
 export const scenarios = {
   [incident001.id]: incident001
@@ -23,6 +23,7 @@ export class Simulator {
     this.language = 'en-IN';
     this.hints = 0;
     this.seminar = false;
+    this.terminal = { history: [], commandsUsed: [], attempts: 0 };
   }
 
   start() { this.stage = 'investigate'; }
