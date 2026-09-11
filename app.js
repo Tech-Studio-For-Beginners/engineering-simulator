@@ -1,6 +1,6 @@
-import { incident001 } from './src/scenarios/incident-001.js';
-import { Simulator } from './src/engine.js';
-import { scoreRun } from './src/scoring.js';
+import { incident001 } from './src/scenarios/incident-001.js?v=20260911-13';
+import { Simulator } from './src/engine.js?v=20260911-13';
+import { scoreRun } from './src/scoring.js?v=20260911-13';
 
 const scenario = incident001;
 const state = new Simulator(scenario);
