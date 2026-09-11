@@ -1,4 +1,4 @@
-import { incident001 } from './scenarios/incident-001.js';
+import { incident001 } from './scenarios/incident-001.js?v=20260911-13';
 
 export const scenarios = {
   [incident001.id]: incident001
