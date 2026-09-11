@@ -12,6 +12,23 @@ export const incident001 = {
     'Root-cause analysis',
     'Decision making'
   ],
+  visualMap: {
+    title: 'Request path',
+    subtitle: 'Build the system picture as you investigate.',
+    nodes: [
+      ['user', '👤', 'User', 'The customer making the request.'],
+      ['dns', '🌐', 'DNS', 'Resolves portal.company.com to an IP address.'],
+      ['firewall', '🔥', 'Firewall', 'Controls incoming HTTPS traffic.'],
+      ['web', '🖥️', 'Web server', 'Hosts the customer portal.'],
+      ['db', '🗄️', 'Database', 'Stores application data.']
+    ],
+    connections: [
+      ['user', 'dns'],
+      ['dns', 'firewall'],
+      ['firewall', 'web'],
+      ['web', 'db']
+    ]
+  },
   investigation: [
     ['dns', 'Check DNS', 'Verify that the hostname resolves to the expected server.'],
     ['web', 'Check the web server', 'Verify service health and resource usage.'],
