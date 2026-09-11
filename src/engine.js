@@ -16,19 +16,19 @@ export class Simulator {
 
   reset() {
     this.stage = 'intro';
-    this.investigations = [];
-    this.hints = 0;
+    this.checks = [];
     this.hypothesis = null;
     this.action = null;
     this.reasoning = '';
     this.language = 'en-IN';
+    this.hints = 0;
     this.seminar = false;
   }
 
   start() { this.stage = 'investigate'; }
 
   investigate(id) {
-    if (!this.investigations.includes(id)) this.investigations.push(id);
+    if (!this.checks.includes(id)) this.checks.push(id);
     this.stage = 'evidence';
   }
 
@@ -39,7 +39,7 @@ export class Simulator {
 
   chooseAction(id) {
     this.action = id;
-    this.stage = 'reasoning';
+    this.stage = 'explain';
   }
 
   askHint() {
@@ -51,6 +51,4 @@ export class Simulator {
     this.reasoning = (text || '').trim();
     this.stage = 'results';
   }
-
-  finish() { this.stage = 'results'; }
 }
