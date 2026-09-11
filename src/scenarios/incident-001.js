@@ -29,6 +29,48 @@ export const incident001 = {
       ['web', 'db']
     ]
   },
+  terminal: {
+    title: 'Engineering Terminal',
+    prompt: 'Use diagnostics to gather evidence. The terminal is simulated for this incident.',
+    commands: [
+      {
+        id: 'nslookup',
+        checkId: 'dns',
+        match: [s => /^nslookup\s+portal\.company\.com$/.test(s), s => /^dig\s+portal\.company\.com$/.test(s)],
+        output: 'Server: 10.0.0.2\nName: portal.company.com\nAddress: 203.0.113.25\n\nResolution: SUCCESS'
+      },
+      {
+        id: 'ping',
+        checkId: 'network',
+        match: [s => /^ping\s+portal\.company\.com$/.test(s), s => /^ping\s+203\.0\.113\.25$/.test(s)],
+        output: 'PING portal.company.com (203.0.113.25)\n64 bytes from 203.0.113.25: time=18 ms\n64 bytes from 203.0.113.25: time=17 ms\n\n2 packets transmitted, 2 received, 0% packet loss'
+      },
+      {
+        id: 'curl',
+        checkId: 'web',
+        match: [s => /^curl\s+-i\s+https:\/\/portal\.company\.com\/?$/.test(s), s => /^curl\s+https:\/\/portal\.company\.com\/?$/.test(s)],
+        output: 'curl: (28) Connection timed out\n\nThe HTTPS request did not receive a response.'
+      },
+      {
+        id: 'web-status',
+        checkId: 'web',
+        match: [s => /^systemctl\s+status\s+webapp$/.test(s), s => /^systemctl\s+status\s+nginx$/.test(s)],
+        output: '● webapp.service - Customer Portal\n   Active: active (running)\n   CPU: 23%\n   Memory: 61%\n   Errors: NONE'
+      },
+      {
+        id: 'dbcheck',
+        checkId: 'db',
+        match: [s => /^dbcheck\s+--status$/.test(s)],
+        output: 'Database: HEALTHY\nConnections: 42\nQuery latency: NORMAL\nConnection errors: NONE'
+      },
+      {
+        id: 'firewall',
+        checkId: 'firewall',
+        match: [s => /^firewallctl\s+rules$/.test(s), s => /^firewallctl\s+status$/.test(s)],
+        output: 'PORT     PROTOCOL    ACTION\n22       TCP         ALLOW\n80       TCP         ALLOW\n443      TCP         BLOCK\n\nLast configuration change: 09:10\nRule: ALLOW-HTTPS-PROD\nState: DISABLED'
+      }
+    ]
+  },
   investigation: [
     ['dns', 'Check DNS', 'Verify that the hostname resolves to the expected server.'],
     ['web', 'Check the web server', 'Verify service health and resource usage.'],
