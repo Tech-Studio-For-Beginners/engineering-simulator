@@ -1,6 +1,6 @@
-import { incident001 } from './src/scenarios/incident-001.js?v=20260911-13';
-import { Simulator } from './src/engine.js?v=20260911-13';
-import { scoreRun } from './src/scoring.js?v=20260911-13';
+import { incident001 } from './src/scenarios/incident-001.js?v=20260911-14';
+import { Simulator } from './src/engine.js?v=20260911-14';
+import { scoreRun } from './src/scoring.js?v=20260911-14';
 
 const scenario = incident001;
 const state = new Simulator(scenario);
@@ -55,14 +55,62 @@ function render(){
   if(state.stage==='evidence')return shell(`<div class="eyebrow">Step 2 · Gather evidence</div><h2>What did you find?</h2><p class="sub">The map updates as you investigate. Use the evidence to eliminate possible causes.</p>${state.checks.map(id=>`<div class="evidence"><h3>${esc(scenario.evidence[id][0])}</h3><pre>${esc(scenario.evidence[id][1])}</pre></div>`).join('')}<div class="actions">${scenario.investigation.filter(x=>!state.checks.includes(x[0])).map(x=>`<button class="choice" data-check="${esc(x[0])}"><strong>${esc(x[1])}</strong><span>${esc(x[2])}</span></button>`).join('')}<button class="primary" data-diagnose="1">I’m ready to form a hypothesis</button>${back('Back to investigation','investigate')}</div>`,true);
   if(state.stage==='diagnose')return shell(`<div class="eyebrow">Step 3 · Diagnose</div><h2>What is the most likely cause?</h2><p class="sub">Use the map and evidence together. Choose the explanation that best fits what you found.</p><div class="actions">${scenario.hypotheses.map(x=>`<button class="choice" data-hypothesis="${esc(x[0])}"><strong>${esc(x[1])}</strong></button>`).join('')}${back('Back to evidence','evidence')}</div>`,true);
   if(state.stage==='action')return shell(`<div class="eyebrow">Step 4 · Restore</div><h2>What would you do?</h2><p class="sub">Select the action that should restore service.</p><div class="actions">${scenario.actions.map(x=>`<button class="choice" data-fix="${esc(x[0])}"><strong>${esc(x[1])}</strong></button>`).join('')}${back('Back to diagnosis','diagnose')}</div>`);
-  if(state.stage==='reasoning')return shell(`<div class="eyebrow">Step 5 · Explain your reasoning</div><h2>Explain it in your own language.</h2><p class="sub">Tell Maya what you found, why you think it caused the problem, and why your chosen action will fix it.</p><div style="margin-top:18px"><div style="font-size:13px;font-weight:750;margin-bottom:8px">Choose your language</div><div class="row"><button class="${state.language==='en-IN'?'primary':'secondary'}" data-language="en-IN">🇬🇧 English</button><button class="${state.language==='ta-IN'?'primary':'secondary'}" data-language="ta-IN">தமிழ்</button></div><p style="font-size:12px;color:#6b7280;margin:10px 0 0">Your language does not affect your engineering score.</p></div><textarea id="reasoning" placeholder="${state.language==='ta-IN'?'உங்கள் முடிவை தமிழில் விளக்குங்கள்...':'Example: 09:10 firewall rule was disabled, so HTTPS traffic on port 443 was blocked...'}">${esc(state.reasoning)}</textarea><div class="row" style="margin-top:12px"><button class="primary" data-submit="1">Submit reasoning</button><button class="secondary" data-voice="1">🎙 Speak your answer</button><button class="secondary" data-hint="1">Ask Maya for a hint</button></div>${state.hints?`<p class="hint">Hint: ${esc(scenario.hints[state.hints-1])}</p>`:''}${back('Back to action','action')}`);
+  if(state.stage==='reasoning')return shell(`<div class="eyebrow">Step 5 · Explain your reasoning</div><h2>Explain it in your own language.</h2><p class="sub">Tell Maya what you found, why you think it caused the problem, and why your chosen action will fix it.</p><div style="margin-top:18px"><div style="font-size:13px;font-weight:750;margin-bottom:8px">Choose your language</div><div class="row"><button class="${state.language==='en-IN'?'primary':'secondary'}" data-language="en-IN">🇬🇧 English</button><button class="${state.language==='ta-IN'?'primary':'secondary'}" data-language="ta-IN">தமிழ்</button></div><p style="font-size:12px;color:#6b7280;margin:10px 0 0">Your language does not affect your engineering score.</p></div><textarea id="reasoning" placeholder="${state.language==='ta-IN'?'உங்கள் முடிவை தமிழில் விளக்குங்கள்...':'Example: 09:10 firewall rule was disabled, so HTTPS traffic on port 443 was blocked...'}">${esc(state.reasoning)}</textarea><div class="row" style="margin-top:12px"><button class="primary" data-submit="1">Submit reasoning</button><button class="secondary" data-voice="1">🎙 Speak your answer</button><button class="secondary" data-hint="1">Ask Maya for a hint</button></div><p id="voice-status" style="font-size:12px;color:#6b7280;margin:10px 0 0;min-height:18px"></p>${state.hints?`<p class="hint">Hint: ${esc(scenario.hints[state.hints-1])}</p>`:''}${back('Back to action','action')}`);
   const {r,items}=feedback();
   const summary=r.score>=85?'Strong engineering investigation.':r.score>=70?'Good start. Now strengthen the evidence-to-reasoning connection.':'Keep investigating. Focus on ruling out alternatives before deciding.';
   return shell(`<div class="eyebrow">Incident complete</div><h2>Investigation complete.</h2><div class="score">${r.score}<small>/100</small></div><p class="sub" style="margin-top:8px"><strong>${summary}</strong></p><div class="success">Root cause: HTTPS traffic was blocked by the firewall.</div><div style="margin-top:22px"><div class="metric"><span>Investigation</span><strong>${r.investigation}/25</strong></div><div class="metric"><span>Evidence usage</span><strong>${r.evidence}/20</strong></div><div class="metric"><span>Technical reasoning</span><strong>${r.reasoning}/30</strong></div><div class="metric"><span>Decision</span><strong>${r.decision}/15</strong></div><div class="metric"><span>Explanation</span><strong>${r.explanation}/10</strong></div>${r.hintPenalty?`<div class="metric"><span>Maya hint penalty</span><strong>-${r.hintPenalty}</strong></div>`:''}</div><div style="margin-top:26px"><div class="eyebrow">What went wrong?</div><h2 style="margin-top:8px">Learn from your investigation</h2><p class="sub">Instead of only telling you that something needs improvement, Maya explains exactly what the evidence showed and what you could do differently.</p>${items.join('')}</div><div style="margin-top:28px"><button class="primary" data-restart="1">Run the incident again</button></div>`);
 }
 
 function speak(text,lang){if(!('speechSynthesis'in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=lang||'en-IN';u.rate=.96;speechSynthesis.speak(u);}
-function listen(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert('Voice input is supported in Chrome or Edge. Please use Chrome or Edge and allow microphone access.');return;}const r=new SR();r.lang=state.language;r.interimResults=false;r.continuous=false;const b=document.querySelector('[data-voice]');if(b)b.textContent='🎙 Listening…';r.onresult=e=>{const el=document.querySelector('#reasoning');if(el)el.value=e.results[0][0].transcript;};r.onerror=()=>{if(b)b.textContent='🎙 Speak your answer';};r.onend=()=>{const x=document.querySelector('[data-voice]');if(x)x.textContent='🎙 Speak your answer';};r.start();}
+function setVoiceStatus(message,kind='info'){
+  const el=document.querySelector('#voice-status');
+  if(!el)return;
+  el.textContent=message;
+  el.style.color=kind==='error'?'#b42318':kind==='good'?'#087443':'#6b7280';
+}
+function listen(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){setVoiceStatus('Voice input is not available in this browser. Please use Chrome or Edge for voice input.','error');return;}
+  const isSafari=/Safari/i.test(navigator.userAgent)&&!/Chrome|Chromium|CriOS|Edg/i.test(navigator.userAgent);
+  const preferredLang=state.language;
+  const recognitionLang=(isSafari&&preferredLang==='ta-IN')?'ta':preferredLang;
+  const startRecognition=(lang,fallbackAllowed=true)=>{
+    const r=new SR();
+    r.lang=lang;
+    r.interimResults=false;
+    r.continuous=false;
+    r.maxAlternatives=1;
+    const b=document.querySelector('[data-voice]');
+    if(b)b.textContent='🎙 Listening…';
+    setVoiceStatus(`Listening for ${lang.startsWith('ta')?'Tamil':'English'}…`,'info');
+    r.onstart=()=>setVoiceStatus(`🎙 Listening for ${lang.startsWith('ta')?'Tamil':'English'}… Speak now.`,'good');
+    r.onresult=e=>{
+      const el=document.querySelector('#reasoning');
+      const transcript=e.results?.[0]?.[0]?.transcript||'';
+      if(el&&transcript){el.value=transcript;el.dispatchEvent(new Event('input',{bubbles:true}));}
+      setVoiceStatus('Voice captured. You can edit your answer before submitting.','good');
+    };
+    r.onerror=e=>{
+      if(e.error==='language-not-supported'&&fallbackAllowed&&lang==='ta-IN'){
+        setVoiceStatus('Tamil language code was not accepted. Retrying with Tamil…','info');
+        setTimeout(()=>startRecognition('ta',false),150);
+        return;
+      }
+      const messages={
+        'not-allowed':'Microphone access was blocked. Allow microphone access for this site and try again.',
+        'audio-capture':'No microphone could be accessed. Check your microphone and browser permissions.',
+        'no-speech':'I did not hear speech. Tap “Speak your answer” and try again.',
+        'network':'Speech recognition needs a network connection. Check your connection and try again.',
+        'service-not-allowed':'This browser did not allow its speech recognition service.'
+      };
+      setVoiceStatus(messages[e.error]||`Voice input could not start (${e.error||'unknown error'}). Try again.`,'error');
+      if(b)b.textContent='🎙 Speak your answer';
+    };
+    r.onend=()=>{const x=document.querySelector('[data-voice]');if(x)x.textContent='🎙 Speak your answer';};
+    try{r.start();}catch(err){if(b)b.textContent='🎙 Speak your answer';setVoiceStatus('Voice input could not start. Please tap the button again and allow microphone access if prompted.','error');}
+  };
+  startRecognition(recognitionLang,true);
+}
 
 root.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
