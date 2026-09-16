@@ -1,7 +1,7 @@
 const root = document.querySelector('#app');
 
-const esc = value => String(value).replace(/[&<>"']/g, c => ({
-  '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+const esc = value => String(value).replace(/[&<>\"']/g, c => ({
+  '&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'
 }[c]));
 
 function lastStudentMessage() {
@@ -12,6 +12,24 @@ function lastStudentMessage() {
 function mayaDialogue(text) {
   const t = text.toLowerCase();
   const previous = lastStudentMessage();
+  const asksForCommand = /\b(command|syntax|what do i type|how do i check|how to check|which command)\b/.test(t);
+
+  // Command help comes before broad topic coaching, so students asking for syntax get it.
+  if (asksForCommand && /\b(firewall|firewall rules|security rules)\b/.test(t)) {
+    return 'On a typical Linux server, you can inspect firewall rules with `sudo iptables -S`. If the system uses UFW, try `sudo ufw status verbose`; on systems using nftables, try `sudo nft list ruleset`. These are real Linux examples, but this incident terminal is simulated and may support only its own listed commands. Look for inbound HTTPS (TCP/443) rules, then compare with recent changes. What evidence would show that a rule is blocking the request?';
+  }
+
+  if (asksForCommand && /\b(dns|domain|resolve|hostname)\b/.test(t)) {
+    return 'Try `nslookup portal.company.com` to check name resolution. You can also use `dig portal.company.com` on systems where dig is installed. Compare the returned address with the expected IP; a successful lookup makes a DNS failure less likely, but does not prove the whole site is reachable.';
+  }
+
+  if (asksForCommand && /\b(web server|http|https|website|curl|endpoint)\b/.test(t)) {
+    return 'To test an HTTPS endpoint, try `curl -I https://portal.company.com` (or `curl -v https://portal.company.com` for more connection detail). A timeout, connection refusal, and HTTP error point to different parts of the path. This terminal is simulated, so use the commands it supports.';
+  }
+
+  if (asksForCommand && /\b(database|db|sql)\b/.test(t)) {
+    return 'There is no single database-health command that works for every engine. First identify the database type and available access. In this incident, inspect the database component or use the simulated terminal’s documented database diagnostic command; check service health, connection errors, and recent changes.';
+  }
 
   if ((t.includes('dns') || t.includes('domain')) && !previous.includes('dns')) {
     return 'That is a reasonable hypothesis. Before we call it the cause, what evidence could you collect to test whether DNS is actually failing?';
